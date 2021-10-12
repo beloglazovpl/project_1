@@ -76,7 +76,7 @@ class YandexDisk:
 
 
 if __name__ == '__main__':
-    id_user_vk = str(input('Введите ID пользоввателя vk.com: '))
+    id_user_vk = input('Введите ID пользоввателя vk.com: ')
     if id_user_vk.isdigit() is True:
         user = VkUser(token_vk)
         for item in user.get_info(id_user_vk)['response']:
