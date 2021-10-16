@@ -53,13 +53,13 @@ class VkUser:
                 size = sizes['type']
                 info_about_photo[id] = [photo, likes, size, date]
         id = 0
-        for xxx in all_likes:
+        for like in all_likes:
             id += 1
-            if all_likes.count(xxx) == 1:
-                photo_name = xxx
+            if all_likes.count(like) == 1:
+                photo_name = like
                 info_about_photo[id].append(photo_name)
             else:
-                photo_name = f'{xxx}_{info_about_photo.get(id)[3]}'
+                photo_name = f'{like}_{info_about_photo.get(id)[3]}'
                 info_about_photo[id].append(photo_name)
         return info_about_photo
 
