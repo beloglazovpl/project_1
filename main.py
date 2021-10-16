@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 
 token_vk = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
-token_yd = '...'
+token_yd = ''
 
 
 class VkUser:
@@ -38,12 +38,29 @@ class VkUser:
         }
         res = requests.get(url=photo_url, params={**self.params, **photo_params}).json()
         info_about_photo = {}
+        id = 0
+        all_likes = []
         for item in res['response']['items']:
             likes = item['likes']['count']
+            all_likes.append(likes)
+        for item in res['response']['items']:
+            id += 1
+            likes = item['likes']['count']
             photo = item['sizes'][-1]['url']
+            date = item['date']
+
             for sizes in item['sizes']:
                 size = sizes['type']
-                info_about_photo[photo] = [likes, size]
+                info_about_photo[id] = [photo, likes, size, date]
+        id = 0
+        for xxx in all_likes:
+            id += 1
+            if all_likes.count(xxx) == 1:
+                photo_name = xxx
+                info_about_photo[id].append(photo_name)
+            else:
+                photo_name = f'{xxx}_{info_about_photo.get(id)[3]}'
+                info_about_photo[id].append(photo_name)
         return info_about_photo
 
 
@@ -67,10 +84,10 @@ class YandexDisk:
         response = requests.put(url=url, headers=headers, params=params)
         return response.json()
 
-    def download_by_link(self, link, likes):
+    def download_by_link(self, link, photo_name):
         upload_url = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
         headers = self.get_headers()
-        params = {'path': f"{name}/{likes}", 'url': link}
+        params = {'path': f"{name}/{photo_name}", 'url': link}
         response = requests.post(url=upload_url, params=params, headers=headers)
         return response.json()
 
@@ -87,8 +104,8 @@ if __name__ == '__main__':
         yandex.get_folder(name)
         photos_list = []
         for keys, values in tqdm(all_photos.items()):
-            yandex.download_by_link(keys, values[0])
-            photo_vk = {'file_name': f"{values[0]}.jpg", 'size': f"{values[1]}"}
+            yandex.download_by_link(values[0], values[4])
+            photo_vk = {'file_name': f"{values[4]}.jpg", 'size': f"{values[2]}"}
             photos_list.append(photo_vk)
             time.sleep(1)
         print(f'{len(all_photos.items())} фотографий успешно загружены на Яндекс.Диск')
@@ -96,3 +113,4 @@ if __name__ == '__main__':
             json.dump(photos_list, f, ensure_ascii=False, indent=2)
     else:
         print('ID пользователя введен неверно')
+        
