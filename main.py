@@ -6,12 +6,23 @@ import time
 
 from tqdm import tqdm
 
-
 token_vk = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
-token_yd = ''
+token_yd = '...'
 
 
-class VkUser:
+class ApiBasic:
+
+    def _send_request(self, method, path, **kwargs):
+        if method == 'get':
+            response = requests.get(url=path, **kwargs).json()
+        elif method == 'post':
+            response = requests.post(url=path, **kwargs).json()
+        elif method == 'put':
+            response = requests.put(url=path, **kwargs).json()
+        return response
+
+
+class VkUser(ApiBasic):
     url = 'https://api.vk.com/method/'
 
     def __init__(self, token):
@@ -25,7 +36,7 @@ class VkUser:
         info_params = {
             'user_id': user_id,
         }
-        res = requests.get(url=info_url, params={**self.params, **info_params}).json()
+        res = self._send_request('get', info_url, params={**self.params, **info_params})
         return res
 
     def get_photo(self, user_id):
@@ -36,7 +47,7 @@ class VkUser:
             'album_id': 'profile',
             'owner_id': user_id
         }
-        res = requests.get(url=photo_url, params={**self.params, **photo_params}).json()
+        res = self._send_request('get', photo_url, params={**self.params, **photo_params})
         info_about_photo = {}
         id = 0
         all_likes = []
@@ -48,7 +59,6 @@ class VkUser:
             likes = item['likes']['count']
             photo = item['sizes'][-1]['url']
             date = item['date']
-
             for sizes in item['sizes']:
                 size = sizes['type']
                 info_about_photo[id] = [photo, likes, size, date]
@@ -64,7 +74,8 @@ class VkUser:
         return info_about_photo
 
 
-class YandexDisk:
+class YandexUser(ApiBasic):
+    host = 'https://cloud-api.yandex.net/v1/disk'
 
     def __init__(self, token):
         self.token = token
@@ -81,15 +92,15 @@ class YandexDisk:
         params = {
             'path': name
         }
-        response = requests.put(url=url, headers=headers, params=params)
-        return response.json()
+        res = self._send_request('put', url, params=params, headers=headers)
+        return res
 
     def download_by_link(self, link, photo_name):
         upload_url = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
         headers = self.get_headers()
         params = {'path': f"{name}/{photo_name}", 'url': link}
-        response = requests.post(url=upload_url, params=params, headers=headers)
-        return response.json()
+        res = self._send_request('post', upload_url, params=params, headers=headers)
+        return res
 
 
 if __name__ == '__main__':
@@ -100,7 +111,7 @@ if __name__ == '__main__':
             name = f"Фото профиля vk.com {item['first_name']} {item['last_name']} (id {item['id']})"
             print(name)
         all_photos = user.get_photo(id_user_vk)
-        yandex = YandexDisk(token_yd)
+        yandex = YandexUser(token_yd)
         yandex.get_folder(name)
         photos_list = []
         for keys, values in tqdm(all_photos.items()):
@@ -113,4 +124,3 @@ if __name__ == '__main__':
             json.dump(photos_list, f, ensure_ascii=False, indent=2)
     else:
         print('ID пользователя введен неверно')
-        
