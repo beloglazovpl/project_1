@@ -1,17 +1,16 @@
 import json
-
 import requests
-
 import time
-
 from tqdm import tqdm
 
-token_vk = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
+
+"""Перед началом работы введите Ваш 'access token VK' и 'OAuth-token Яндекс'"""
+token_vk = '...'
 token_yd = '...'
 
 
 class ApiBasic:
-
+    """Родительский класс с общей функцией отправлять запросы"""
     def _send_request(self, method, path, **kwargs):
         if method == 'get':
             response = requests.get(url=path, **kwargs).json()
@@ -31,6 +30,7 @@ class VkUser(ApiBasic):
             'v': '5.131'
         }
 
+    # Получаем информацию о пользователе
     def get_info(self, user_id):
         info_url = self.url + 'users.get'
         info_params = {
@@ -39,6 +39,9 @@ class VkUser(ApiBasic):
         res = self._send_request('get', info_url, params={**self.params, **info_params})
         return res
 
+    # Получаем словарь фотографий,где
+    # ключ - порядковый номер
+    # значения - ссылка, количество лайков, размер, дата, имя фотографии (количество лайков с датой при необходимости)
     def get_photo(self, user_id):
         photo_url = self.url + 'photos.get'
         photo_params = {
@@ -86,6 +89,7 @@ class YandexUser(ApiBasic):
             'Authorization': 'OAuth {}'.format(self.token)
         }
 
+    # Создаем папку где будут храниться фотографии
     def get_folder(self, name):
         url = 'https://cloud-api.yandex.net/v1/disk/resources/'
         headers = self.get_headers()
@@ -95,6 +99,7 @@ class YandexUser(ApiBasic):
         res = self._send_request('put', url, params=params, headers=headers)
         return res
 
+    # Загружаем фотографии по ссылке из профиля vk.com в созданную папку
     def download_by_link(self, link, photo_name):
         upload_url = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
         headers = self.get_headers()
